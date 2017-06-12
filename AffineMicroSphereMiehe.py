@@ -24,9 +24,9 @@ def UnitSphereQuadrature():
     # Directional cosines from unit sphere integration
     dc0, dc1, dc2 = 0.707106781187, 0.387907304067, 0.836095596749
 
-    clist = [[1.0, 0.0, 0.0],    [0.0, 1.0, 0.0],  [0.0, 0.0, 1.0],   [dc0, dc0, 0.0],
-             [dc0, -dc0, 0.0],   [dc0, 0.0, dc0],  [dc0, 0.0, -dc0],  [0.0, dc0, dc0],
-             [0.0, dc0, -dc0],   [dc1, dc1, dc2],  [dc1, dc1, -dc2], [dc1, -dc1, dc2],
+    clist = [[1.0, 0.0, 0.0],   [0.0, 1.0, 0.0], [0.0, 0.0, 1.0],  [dc0, dc0, 0.0],
+             [dc0, -dc0, 0.0],  [dc0, 0.0, dc0], [dc0, 0.0, -dc0], [0.0, dc0, dc0],
+             [0.0, dc0, -dc0],  [dc1, dc1, dc2], [dc1, dc1, -dc2], [dc1, -dc1, dc2],
              [dc1, -dc1, -dc2], [dc1, dc2, dc1], [dc1, dc2, -dc1], [dc1, -dc2, dc1],
              [dc1, -dc2, -dc1], [dc2, dc1, dc1], [dc2, dc1, -dc1], [dc2, -dc1, dc1],
              [dc2, -dc1, -dc1]]
@@ -55,9 +55,9 @@ uniaxialPlot = {}
 
 for N in [16, 25, 36, 64, 100]:
 
-    σ11_normalized = []
-    σ22_normalized = []
-    σ33_normalized = []
+    stress11_normalized = []
+    stress22_normalized = []
+    stress33_normalized = []
 
     # The range of values to plot the normalized stress
     λ_ua_range = np.arange(1.0, np.sqrt(N)*0.98, 0.01)
@@ -71,10 +71,10 @@ for N in [16, 25, 36, 64, 100]:
         F[2, 2] = 1.0 / np.sqrt(λ_ua)
 
         τ = np.zeros((3, 3))  # Kirchhoff stress
-        𝐂 = np.zeros((6, 6))  # Constitutive model
+        C = np.zeros((6, 6))  # Constitutive model
 
         # Obtain the unimodular part of the deformation gradient
-        F̄ = UnimodularDecomposition(F)
+        F_unimodular = UnimodularDecomposition(F)
 
         # Stretch directions and perform the integration
         for (λr, λs, λt), wl in zip(clist, w):
@@ -82,7 +82,7 @@ for N in [16, 25, 36, 64, 100]:
             ri = np.array((λr, λs, λt))
 
             # Deformed tangents
-            t = np.matmul(F̄, ri)
+            t = np.matmul(F_unimodular, ri)
 
             # Affine microstretches
             λi = np.linalg.norm(t)
@@ -91,18 +91,18 @@ for N in [16, 25, 36, 64, 100]:
             τ += μ * (3*N - λi**2) / (N - λi**2) * np.outer(t, t) * wl
 
             # Compute the macro-moduli
-            𝐂 += μ * ( (λi**4 + 3*N**2) / (N - λi**2)**2 * λi**(-2) - (3*N-λi**2) / (N-λi**2) * λi**(-2) ) * OuterProduct4(t) * wl
+            C += μ * ( (λi**4 + 3*N**2) / (N - λi**2)**2 * λi**(-2) - (3*N-λi**2) / (N-λi**2) * λi**(-2) ) * OuterProduct4(t) * wl
 
             # Deviatoric projection
 
         # Accumulate and account for symmetry of quadrature
-        σ11_normalized.append(τ[0, 0] * 2 / μ)
-        σ22_normalized.append(τ[1, 1] * 2 / μ)
-        σ33_normalized.append(τ[2, 2] * 2 / μ)
+        stress11_normalized.append(τ[0, 0] * 2 / μ)
+        stress22_normalized.append(τ[1, 1] * 2 / μ)
+        stress33_normalized.append(τ[2, 2] * 2 / μ)
 
-    uniaxialPlot[N] = σ11_normalized
+    uniaxialPlot[N] = stress11_normalized
 
-    plt.plot(λ_ua_range, σ33_normalized, linewidth=2, label='N = '+ str(N))
+    plt.plot(λ_ua_range, stress33_normalized, linewidth=2, label='N = '+ str(N))
     plt.grid(True)
 
 plt.legend(loc=2)
