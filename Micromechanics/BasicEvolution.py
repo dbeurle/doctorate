@@ -34,6 +34,7 @@ for t in range(0, number_of_time_steps):
 
     for i in range(0, number_of_chains):
 
+        # Probably not correct (pun intended)
         segments_per_chain = int(np.random.normal(loc = mean_segments_per_chain,
                                                   scale = stdev_segments_per_chain))
 
